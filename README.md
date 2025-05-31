@@ -1,73 +1,114 @@
-# Resume Analysis MCP Server
+# Resume MCP Agent
 
-An intelligent MCP server for resume analysis, sorting, and selection using Python and Google Agent Development Kit.
+An intelligent Model Context Protocol (MCP) server for AI-powered resume analysis and sorting. This system helps HR professionals and recruiters efficiently analyze resumes and match them with job descriptions using advanced NLP and machine learning techniques.
 
 ## Features
 
-- **Resume Parsing**: Extract structured data from PDF, DOCX, and TXT resume files
-- **Skills Analysis**: Identify and categorize technical and soft skills
-- **Experience Evaluation**: Analyze work experience, education, and career progression
-- **Resume Scoring**: Score resumes based on job requirements and criteria
-- **Batch Processing**: Analyze multiple resumes simultaneously
-- **Intelligent Sorting**: Rank candidates based on relevance and qualifications
-- **Job Matching**: Match resumes to specific job descriptions
-- **Report Generation**: Generate detailed analysis reports
+- **Resume Parsing**: Extract text from PDF and DOCX resume files
+- **Job Description Matching**: Intelligent matching between resumes and job requirements
+- **Skills Analysis**: Extract and analyze technical and soft skills
+- **Experience Evaluation**: Assess work experience relevance and seniority
+- **Education Matching**: Evaluate educational background against job requirements
+- **Scoring System**: Comprehensive scoring algorithm for resume ranking
+- **Web Interface**: Modern web UI for easy interaction
+- **MCP Integration**: Full Model Context Protocol support for AI agents
 
-## Installation
+## Technology Stack
 
-1. Clone this repository:
+- **Backend**: Python with FastAPI
+- **MCP**: Model Context Protocol server implementation
+- **AI/ML**: Google's ADK, spaCy, scikit-learn, transformers
+- **Document Processing**: PyPDF2, python-docx
+- **Web UI**: FastAPI with Jinja2 templates
+- **Environment**: UV for dependency management and virtual environments
+
+## Setup
+
+### Prerequisites
+
+- Python 3.9 or higher
+- UV package manager
+
+### Installation
+
+1. Clone the repository:
 ```bash
 git clone <repository-url>
 cd resume-mcp
 ```
 
-2. Install dependencies:
+2. Create and activate virtual environment with UV:
 ```bash
-pip install -r requirements.txt
+uv venv
+# On Windows
+.venv\Scripts\activate
+# On Unix/macOS
+source .venv/bin/activate
 ```
 
-3. Set up environment variables:
+3. Install dependencies:
 ```bash
-cp .env.example .env
-# Edit .env with your Google Cloud credentials
+uv pip install -e .
 ```
 
-4. Download required NLP models:
+4. Download spaCy language model:
 ```bash
-python -c "import spacy; spacy.cli.download('en_core_web_sm')"
-python -c "import nltk; nltk.download('punkt'); nltk.download('stopwords')"
+python -m spacy download en_core_web_sm
+```
+
+5. Set up Google AI credentials (optional):
+```bash
+export GOOGLE_API_KEY="your-api-key"
 ```
 
 ## Usage
 
-1. Start the MCP server:
+### Start the MCP Server
+
 ```bash
-python main.py
+resume-mcp
 ```
 
-2. The server will be available for MCP connections on the configured port.
+### Web Interface
 
-## Configuration
+Navigate to `http://localhost:8000` to access the web interface.
 
-Configure the server through environment variables in `.env`:
+### API Endpoints
 
-- `GOOGLE_CLOUD_PROJECT`: Your Google Cloud project ID
-- `GOOGLE_APPLICATION_CREDENTIALS`: Path to your service account key
-- `MCP_SERVER_PORT`: Port for MCP server (default: 8000)
-- `LOG_LEVEL`: Logging level (default: INFO)
+- `POST /analyze/resume` - Analyze a single resume
+- `POST /match/job` - Match resumes with job description
+- `GET /resumes` - List all analyzed resumes
+- `GET /jobs` - List all job descriptions
 
-## API Endpoints
+## Project Structure
 
-The MCP server provides the following tools:
+```
+resume-mcp/
+├── src/
+│   └── resume_mcp/
+│       ├── __init__.py
+│       ├── server.py              # MCP server implementation
+│       ├── models/                # Data models
+│       ├── analyzers/             # Resume and job analysis
+│       ├── matching/              # Matching algorithms
+│       ├── storage/               # Data storage
+│       ├── web/                   # Web interface
+│       └── utils/                 # Utility functions
+├── templates/                     # HTML templates
+├── static/                       # Static assets
+├── tests/                        # Test suite
+├── pyproject.toml                # Project configuration
+└── README.md                     # This file
+```
 
-- `analyze_resume`: Analyze a single resume file
-- `batch_analyze_resumes`: Analyze multiple resumes
-- `score_resume`: Score a resume against job criteria
-- `sort_resumes`: Sort resumes by relevance
-- `match_job`: Match resumes to job descriptions
-- `extract_skills`: Extract skills from resume text
-- `generate_report`: Generate analysis report
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests
+5. Submit a pull request
 
 ## License
 
-MIT License
+MIT License - see LICENSE file for details.
