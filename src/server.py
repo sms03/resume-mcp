@@ -4,22 +4,20 @@ MCP Server implementation for resume analysis
 
 import logging
 import json
-import asyncio
 from typing import Any, Dict, List, Optional
 from pathlib import Path
-import base64
 
 from mcp.server import Server
-from mcp.types import Tool, TextContent, ImageContent, EmbeddedResource
+from mcp.types import Tool, TextContent
 
 try:
     from .config import Config
     from .analyzer import ResumeAnalyzer
-    from .models import JobRequirement, EducationLevel, ParsedResume, AnalysisResult
+    from .models import JobRequirement, EducationLevel
 except ImportError:
     from config import Config
     from analyzer import ResumeAnalyzer
-    from models import JobRequirement, EducationLevel, ParsedResume, AnalysisResult
+    from models import JobRequirement, EducationLevel
 
 class ResumeAnalysisServer:
     """MCP Server for resume analysis operations"""
@@ -28,11 +26,10 @@ class ResumeAnalysisServer:
         self.config = config
         self.logger = logging.getLogger(__name__)
         self.analyzer = ResumeAnalyzer(config)
-        
-        # Validate configuration
+          # Validate configuration
         config.validate()
-    
-    async def register_tools(self, server: Server):
+        
+    async def register_tools(self, server: Server[Any, Any]):
         """Register all tools with the MCP server"""
         
         @server.list_tools()
@@ -296,10 +293,9 @@ class ResumeAnalysisServer:
         # Validate file path
         if not Path(file_path).exists():
             return [TextContent(type="text", text=f"File not found: {file_path}")]
+          result = await self.analyzer.analyze_single_resume(file_path, job_req)
         
-        result = await self.analyzer.analyze_single_resume(file_path, job_req)
-        
-        response = {
+        response: Dict[str, Any] = {
             "resume_analysis": {
                 "file_path": result.resume.file_path,
                 "candidate_name": result.resume.contact_info.name,
@@ -330,15 +326,14 @@ class ResumeAnalysisServer:
         }
         
         return [TextContent(type="text", text=json.dumps(response, indent=2))]
-    
-    async def _handle_batch_analyze_resumes(self, args: Dict[str, Any]) -> List[TextContent]:
+      async def _handle_batch_analyze_resumes(self, args: Dict[str, Any]) -> List[TextContent]:
         """Handle batch resume analysis"""
         file_paths = args["file_paths"]
         job_req = self._parse_job_requirements(args.get("job_requirements"))
         
         # Validate file paths
-        valid_paths = []
-        invalid_paths = []
+        valid_paths: List[str] = []
+        invalid_paths: List[str] = []
         
         for path in file_paths:
             if Path(path).exists():
@@ -355,7 +350,7 @@ class ResumeAnalysisServer:
         results = await self.analyzer.analyze_batch_resumes(valid_paths, job_req)
         sorted_results = self.analyzer.sort_resumes_by_relevance(results, job_req)
         
-        response = {
+        response: Dict[str, Any] = {
             "batch_analysis": {
                 "total_processed": len(results),
                 "total_requested": len(file_paths),
@@ -380,8 +375,7 @@ class ResumeAnalysisServer:
         }
         
         return [TextContent(type="text", text=json.dumps(response, indent=2))]
-    
-    async def _handle_score_resume(self, args: Dict[str, Any]) -> List[TextContent]:
+      async def _handle_score_resume(self, args: Dict[str, Any]) -> List[TextContent]:
         """Handle resume scoring against job requirements"""
         file_path = args["file_path"]
         job_req = self._parse_job_requirements(args["job_requirements"])
@@ -391,7 +385,7 @@ class ResumeAnalysisServer:
         
         result = await self.analyzer.analyze_single_resume(file_path, job_req)
         
-        response = {
+        response: Dict[str, Any] = {
             "scoring_analysis": {
                 "candidate": result.resume.contact_info.name,
                 "job_title": job_req.title if job_req else "Not specified",
@@ -433,12 +427,11 @@ class ResumeAnalysisServer:
             results.sort(key=lambda r: r.score.skills_score, reverse=True)
         else:  # overall_score
             results = self.analyzer.sort_resumes_by_relevance(results, job_req)
-        
-        # Update rankings
+          # Update rankings
         for i, result in enumerate(results, 1):
             result.ranking = i
         
-        response = {
+        response: Dict[str, Any] = {
             "sorted_resumes": {
                 "sort_criteria": sort_criteria,
                 "total_candidates": len(results),
@@ -476,8 +469,7 @@ class ResumeAnalysisServer:
             required_skills=filters.get("required_skills"),
             education_level=EducationLevel(filters["education_level"]) if filters.get("education_level") else None
         )
-        
-        response = {
+          response: Dict[str, Any] = {
             "filtering_results": {
                 "original_count": len(results),
                 "filtered_count": len(filtered_results),
@@ -507,9 +499,8 @@ class ResumeAnalysisServer:
             return [TextContent(type="text", text=f"File not found: {file_path}")]
         
         resume = await self.analyzer.parser.parse_file(file_path)
-        
-        # Filter skills by requested categories
-        filtered_skills = []
+          # Filter skills by requested categories
+        filtered_skills: List[Dict[str, Any]] = []
         for skill in resume.skills:
             if skill.category.value in skill_categories:
                 filtered_skills.append({
@@ -520,14 +511,13 @@ class ResumeAnalysisServer:
                 })
         
         # Group by category
-        skills_by_category = {}
+        skills_by_category: Dict[str, List[Dict[str, Any]]] = {}
         for skill in filtered_skills:
             category = skill["category"]
             if category not in skills_by_category:
                 skills_by_category[category] = []
             skills_by_category[category].append(skill)
-        
-        response = {
+          response: Dict[str, Any] = {
             "skills_extraction": {
                 "candidate": resume.contact_info.name,
                 "file_path": file_path,
@@ -588,8 +578,7 @@ class ResumeAnalysisServer:
         
         # Return top matches
         top_matches = sorted_results[:max_results]
-        
-        response = {
+          response: Dict[str, Any] = {
             "job_matching": {
                 "job_description_summary": job_description[:200] + "..." if len(job_description) > 200 else job_description,
                 "extracted_requirements": {
@@ -615,6 +604,71 @@ class ResumeAnalysisServer:
         }
         
         return [TextContent(type="text", text=json.dumps(response, indent=2))]
+    
+    # Public API methods for web integration
+    async def analyze_resume_api(self, args: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Public wrapper for resume analysis"""
+        try:
+            result = await self._handle_analyze_resume(args)
+            return [{"text": result[0].text}] if result else []
+        except Exception as e:
+            return [{"error": str(e)}]
+    
+    async def batch_analyze_resumes_api(self, args: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Public wrapper for batch resume analysis"""
+        try:
+            result = await self._handle_batch_analyze_resumes(args)
+            return [{"text": result[0].text}] if result else []
+        except Exception as e:
+            return [{"error": str(e)}]
+    
+    async def score_resume_api(self, args: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Public wrapper for resume scoring"""
+        try:
+            result = await self._handle_score_resume(args)
+            return [{"text": result[0].text}] if result else []
+        except Exception as e:
+            return [{"error": str(e)}]
+    
+    async def sort_resumes_api(self, args: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Public wrapper for resume sorting"""
+        try:
+            result = await self._handle_sort_resumes(args)
+            return [{"text": result[0].text}] if result else []
+        except Exception as e:
+            return [{"error": str(e)}]
+    
+    async def filter_resumes_api(self, args: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Public wrapper for resume filtering"""
+        try:
+            result = await self._handle_filter_resumes(args)
+            return [{"text": result[0].text}] if result else []
+        except Exception as e:
+            return [{"error": str(e)}]
+    
+    async def match_job_api(self, args: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Public wrapper for job matching"""
+        try:
+            result = await self._handle_match_job(args)
+            return [{"text": result[0].text}] if result else []
+        except Exception as e:
+            return [{"error": str(e)}]
+    
+    async def extract_skills_api(self, args: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Public wrapper for skills extraction"""
+        try:
+            result = await self._handle_extract_skills(args)
+            return [{"text": result[0].text}] if result else []
+        except Exception as e:
+            return [{"error": str(e)}]
+    
+    async def generate_report_api(self, args: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Public wrapper for report generation"""
+        try:
+            result = await self._handle_generate_report(args)
+            return [{"text": result[0].text}] if result else []
+        except Exception as e:
+            return [{"error": str(e)}]
     
     def _parse_job_requirements(self, job_req_dict: Optional[Dict[str, Any]]) -> Optional[JobRequirement]:
         """Parse job requirements from dictionary"""
@@ -644,11 +698,10 @@ class ResumeAnalysisServer:
         # Simplified skill extraction - in practice, use NLP
         common_skills = [
             "python", "java", "javascript", "react", "angular", "vue",
-            "node.js", "express", "django", "flask", "sql", "aws", "docker"
-        ]
+            "node.js", "express", "django", "flask", "sql", "aws", "docker"        ]
         
         text_lower = text.lower()
-        found_skills = []
+        found_skills: List[str] = []
         
         for skill in common_skills:
             if skill in text_lower:

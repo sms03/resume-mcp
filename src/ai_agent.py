@@ -13,14 +13,16 @@ try:
     from google.cloud import aiplatform
     HAS_GOOGLE_AI = True
 except ImportError:
+    genai = None
+    aiplatform = None
     HAS_GOOGLE_AI = False
     logging.warning("Google AI libraries not available. Some features may be limited.")
 
 try:
-    from .models import ParsedResume, JobRequirement, ResumeScore, AnalysisResult
+    from .models import ParsedResume, JobRequirement
     from .config import Config
 except ImportError:
-    from models import ParsedResume, JobRequirement, ResumeScore, AnalysisResult
+    from models import ParsedResume, JobRequirement
     from config import Config
 
 class GoogleAIAgent:
@@ -30,22 +32,22 @@ class GoogleAIAgent:
         self.config = config
         self.logger = logging.getLogger(__name__)
         self._setup_client()
-    
-    def _setup_client(self):
+      def _setup_client(self):
         """Setup Google AI client"""
         if not HAS_GOOGLE_AI:
             self.logger.warning("Google AI not available")
             self.client = None
+            self.model = None
             return
         
         try:
-            if self.config.google_api_key:
+            if self.config.google_api_key and genai:
                 genai.configure(api_key=self.config.google_api_key)
                 # Get model name from environment or use default
                 model_name = os.getenv('AI_MODEL_NAME', 'gemini-1.5-flash')
                 self.model = genai.GenerativeModel(model_name)
                 self.logger.info(f"Google AI configured with API key using model: {model_name}")
-            elif self.config.google_cloud_project:
+            elif self.config.google_cloud_project and aiplatform:
                 aiplatform.init(project=self.config.google_cloud_project)
                 self.logger.info("Google Cloud AI Platform configured")
             else:
@@ -136,7 +138,7 @@ class GoogleAIAgent:
         
         return prompt
     
-    def _format_education(self, education_list) -> str:
+    def _format_education(self, education_list: List[Any]) -> str:
         """Format education list for prompt"""
         if not education_list:
             return "None listed"
@@ -146,7 +148,7 @@ class GoogleAIAgent:
             formatted.append(f"- {edu.degree} in {edu.field_of_study} from {edu.institution}")
         return "\n".join(formatted)
     
-    def _format_experience(self, experience_list) -> str:
+    def _format_experience(self, experience_list: List[Any]) -> str:
         """Format experience list for prompt"""
         if not experience_list:
             return "None listed"
@@ -158,7 +160,7 @@ class GoogleAIAgent:
                 formatted.append(f"  Responsibilities: {'; '.join(exp.responsibilities[:3])}")
         return "\n".join(formatted)
     
-    def _format_skills(self, skills_list) -> str:
+    def _format_skills(self, skills_list: List[Any]) -> str:
         """Format skills list for prompt"""
         if not skills_list:
             return "None listed"

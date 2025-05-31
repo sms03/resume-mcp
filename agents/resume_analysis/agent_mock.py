@@ -6,9 +6,8 @@ This version works without Google AI APIs for testing purposes
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
 import json
-from typing import Dict, Any, List
+from typing import List, Dict, Any
 import os
-import sys
 from pathlib import Path
 
 def analyze_resume(file_path: str) -> str:
@@ -74,9 +73,8 @@ def batch_analyze_resumes(file_paths: List[str]) -> str:
         
     Returns:
         Batch analysis results as a string
-    """
-    try:
-        results = []
+    """    try:
+        results: List[Dict[str, Any]] = []
         for i, file_path in enumerate(file_paths):
             if os.path.exists(file_path):
                 results.append({
@@ -88,10 +86,9 @@ def batch_analyze_resumes(file_paths: List[str]) -> str:
                     "job_match_percentage": 70 + (i * 5),
                     "experience_years": 3 + i,
                     "skills_count": 10 + (i * 2),
-                    "recommendation": f"Good candidate #{i + 1} for consideration"
-                })
+                    "recommendation": f"Good candidate #{i + 1} for consideration"                })
         
-        response = {
+        response: Dict[str, Any] = {
             "batch_analysis": {
                 "total_processed": len(results),
                 "total_requested": len(file_paths),
@@ -165,12 +162,11 @@ def match_job(file_paths: List[str], job_description: str) -> str:
     Returns:
         Job matching results as a string
     """
-    try:
-        # Extract basic info from job description
-        keywords = ["python", "javascript", "react", "sql", "aws"]
-        found_skills = [skill for skill in keywords if skill.lower() in job_description.lower()]
+    try:        # Extract basic info from job description
+        keywords: List[str] = ["python", "javascript", "react", "sql", "aws"]
+        found_skills: List[str] = [skill for skill in keywords if skill.lower() in job_description.lower()]
         
-        top_matches = []
+        top_matches: List[Dict[str, Any]] = []
         for i, file_path in enumerate(file_paths[:5]):  # Top 5 matches
             if os.path.exists(file_path):
                 top_matches.append({
@@ -212,9 +208,8 @@ def extract_skills(file_paths: List[str]) -> str:
     Returns:
         Extracted skills as a string
     """
-    try:
-        # Mock skills data
-        mock_skills = [
+    try:        # Mock skills data
+        mock_skills: List[Dict[str, Any]] = [
             {"name": "Python", "category": "technical", "count": 8},
             {"name": "JavaScript", "category": "technical", "count": 6},
             {"name": "React", "category": "technical", "count": 5},
@@ -223,7 +218,7 @@ def extract_skills(file_paths: List[str]) -> str:
             {"name": "Communication", "category": "soft", "count": 9},
         ]
         
-        skills_by_candidate = []
+        skills_by_candidate: List[Dict[str, Any]] = []
         for i, file_path in enumerate(file_paths):
             if os.path.exists(file_path):
                 candidate_skills = mock_skills[:4 + i % 3]  # Varying skills per candidate
@@ -231,10 +226,9 @@ def extract_skills(file_paths: List[str]) -> str:
                     "candidate": f"Candidate {i + 1} (Mock)",
                     "file_path": file_path,
                     "total_skills": len(candidate_skills),
-                    "skills": candidate_skills
-                })
+                    "skills": candidate_skills                })
         
-        response = {
+        response: Dict[str, Any] = {
             "skills_extraction": {
                 "total_candidates": len(file_paths),
                 "total_unique_skills": len(mock_skills),

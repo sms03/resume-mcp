@@ -6,7 +6,6 @@ from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
 import json
 from typing import Dict, Any, List
-import os
 import sys
 from pathlib import Path
 import asyncio
@@ -38,9 +37,8 @@ def analyze_resume(file_path: str) -> str:
         asyncio.set_event_loop(loop)
         try:
             result = loop.run_until_complete(analyzer.analyze_single_resume(file_path))
-            
-            # Format the result as a readable string
-            response = {
+              # Format the result as a readable string
+            response: Dict[str, Any] = {
                 "candidate_name": result.resume.contact_info.name,
                 "email": result.resume.contact_info.email,
                 "phone": result.resume.contact_info.phone,
@@ -182,15 +180,14 @@ def match_job(file_paths: List[str], job_description: str) -> str:
         # Extract requirements from job description (simplified)
         # In practice, you'd use NLP for better extraction
         import re
-        
-        # Extract skills from job description
-        common_skills = [
+          # Extract skills from job description
+        common_skills: List[str] = [
             "python", "java", "javascript", "react", "angular", "vue",
             "node.js", "express", "django", "flask", "sql", "aws", "docker"
         ]
         
         job_description_lower = job_description.lower()
-        found_skills = []
+        found_skills: List[str] = []
         
         for skill in common_skills:
             if skill in job_description_lower:
@@ -272,15 +269,14 @@ def extract_skills(file_paths: List[str]) -> str:
         asyncio.set_event_loop(loop)
         try:
             results = loop.run_until_complete(analyzer.analyze_batch_resumes(file_paths))
-            
-            # Extract and aggregate skills
+              # Extract and aggregate skills
             all_skills: Dict[str, Dict[str, Any]] = {}
-            skills_by_candidate = []
+            skills_by_candidate: List[Dict[str, Any]] = []
             
             for result in results:
-                candidate_skills = []
+                candidate_skills: List[Dict[str, Any]] = []
                 for skill in result.resume.skills:
-                    skill_info = {
+                    skill_info: Dict[str, Any] = {
                         "name": skill.name,
                         "category": skill.category.value,
                         "proficiency_level": skill.proficiency_level,
@@ -299,11 +295,10 @@ def extract_skills(file_paths: List[str]) -> str:
                     "total_skills": len(candidate_skills),
                     "skills": candidate_skills
                 })
-            
-            # Sort skills by frequency
+              # Sort skills by frequency
             most_common_skills = sorted(all_skills.items(), key=lambda x: x[1]["count"], reverse=True)[:10]
             
-            response = {
+            response: Dict[str, Any] = {
                 "skills_extraction": {
                     "total_candidates": len(results),
                     "total_unique_skills": len(all_skills),

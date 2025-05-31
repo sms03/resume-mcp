@@ -2,7 +2,7 @@
 Data models for resume analysis
 """
 
-from typing import List, Dict, Optional, Any
+from typing import List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum

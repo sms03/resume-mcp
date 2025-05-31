@@ -20,8 +20,22 @@ try:
     from fastapi.middleware.cors import CORSMiddleware
     from fastapi.responses import JSONResponse
     import uvicorn
+    FastAPI = FastAPI
+    HTTPException = HTTPException
+    UploadFile = UploadFile
+    File = File
+    CORSMiddleware = CORSMiddleware
+    JSONResponse = JSONResponse
+    uvicorn = uvicorn
     HAS_FASTAPI = True
 except ImportError:
+    FastAPI = None
+    HTTPException = None
+    UploadFile = None
+    File = None
+    CORSMiddleware = None
+    JSONResponse = None
+    uvicorn = None
     HAS_FASTAPI = False
     logging.warning("FastAPI not available. Web UI features will be limited.")
 

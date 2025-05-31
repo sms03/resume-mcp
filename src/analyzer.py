@@ -4,14 +4,14 @@ Resume analysis and scoring engine
 
 import logging
 import asyncio
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import time
 
 try:
     from .models import (
         ParsedResume, JobRequirement, ResumeScore, AnalysisResult,
-        SkillCategory, EducationLevel
+        EducationLevel
     )
     from .config import Config
     from .parser import ResumeParser
@@ -19,7 +19,7 @@ try:
 except ImportError:
     from models import (
         ParsedResume, JobRequirement, ResumeScore, AnalysisResult,
-        SkillCategory, EducationLevel
+        EducationLevel
     )
     from config import Config
     from parser import ResumeParser
@@ -92,11 +92,10 @@ class ResumeAnalyzer:
         if len(file_paths) > self.config.batch_size_limit:
             self.logger.warning(f"Batch size {len(file_paths)} exceeds limit {self.config.batch_size_limit}")
             file_paths = file_paths[:self.config.batch_size_limit]
-        
-        # Process in parallel with controlled concurrency
+          # Process in parallel with controlled concurrency
         semaphore = asyncio.Semaphore(5)  # Limit concurrent processing
         
-        async def analyze_with_semaphore(file_path):
+        async def analyze_with_semaphore(file_path: str):
             async with semaphore:
                 return await self.analyze_single_resume(file_path, job_req)
         
@@ -104,14 +103,12 @@ class ResumeAnalyzer:
             results = await asyncio.gather(
                 *[analyze_with_semaphore(fp) for fp in file_paths],
                 return_exceptions=True
-            )
-            
-            # Filter out exceptions and log errors
-            valid_results = []
+            )            # Filter out exceptions and log errors
+            valid_results: List[AnalysisResult] = []
             for i, result in enumerate(results):
                 if isinstance(result, Exception):
                     self.logger.error(f"Failed to analyze {file_paths[i]}: {result}")
-                else:
+                elif isinstance(result, AnalysisResult):
                     valid_results.append(result)
             
             self.logger.info(f"Successfully analyzed {len(valid_results)}/{len(file_paths)} resumes")
@@ -217,8 +214,7 @@ class ResumeAnalyzer:
         matching_required = resume_skills.intersection(required_skills)
         missing_required = required_skills - resume_skills
         matching_preferred = resume_skills.intersection(preferred_skills)
-        
-        # Calculate score
+          # Calculate score
         if not required_skills:
             score = 0.8  # Neutral score when no skills specified
         else:
@@ -231,15 +227,15 @@ class ResumeAnalyzer:
             "matching": list(matching_required | matching_preferred),
             "missing": list(missing_required)
         }
-    
+
     def _generate_recommendation(
         self, 
         resume: ParsedResume, 
-        job_req: JobRequirement, 
+        job_req: JobRequirement,
         score: ResumeScore
     ) -> str:
         """Generate recommendation based on analysis"""
-        recommendations = []
+        recommendations: List[str] = []
         
         if score.overall_score >= 0.8:
             recommendations.append("Excellent candidate match")
@@ -280,13 +276,12 @@ class ResumeAnalyzer:
                 key=lambda r: r.score.overall_score,
                 reverse=True
             )
-        
-        # Assign rankings
+          # Assign rankings
         for i, result in enumerate(sorted_results, 1):
             result.ranking = i
         
         return sorted_results
-    
+
     def filter_resumes_by_criteria(
         self,
         results: List[AnalysisResult],
@@ -296,7 +291,7 @@ class ResumeAnalyzer:
         education_level: Optional[EducationLevel] = None
     ) -> List[AnalysisResult]:
         """Filter resumes by specific criteria"""
-        filtered = []
+        filtered: List[AnalysisResult] = []
         
         for result in results:
             # Check minimum score
@@ -336,10 +331,9 @@ class ResumeAnalyzer:
                     continue
             
             filtered.append(result)
-        
-        self.logger.info(f"Filtered {len(results)} resumes to {len(filtered)} candidates")
+          self.logger.info(f"Filtered {len(results)} resumes to {len(filtered)} candidates")
         return filtered
-    
+
     async def generate_analysis_report(
         self, 
         results: List[AnalysisResult],
@@ -353,22 +347,20 @@ class ResumeAnalyzer:
         total_candidates = len(results)
         avg_score = sum(r.score.overall_score for r in results) / total_candidates
         avg_experience = sum(r.resume.total_experience_years for r in results) / total_candidates
-        
-        # Top candidates (top 20% or minimum 3)
+          # Top candidates (top 20% or minimum 3)
         top_count = max(3, int(total_candidates * 0.2))
         sorted_results = self.sort_resumes_by_relevance(results, job_req)
         top_candidates = sorted_results[:top_count]
         
         # Skill analysis
-        all_skills = {}
+        all_skills: Dict[str, int] = {}
         for result in results:
             for skill in result.resume.skills:
                 all_skills[skill.name] = all_skills.get(skill.name, 0) + 1
         
         most_common_skills = sorted(all_skills.items(), key=lambda x: x[1], reverse=True)[:10]
-        
-        # Education distribution
-        education_dist = {}
+          # Education distribution
+        education_dist: Dict[str, int] = {}
         for result in results:
             for edu in result.resume.education:
                 level = edu.level.value
@@ -377,7 +369,7 @@ class ResumeAnalyzer:
         # Get AI insights if available
         ai_insights = await self.ai_agent.generate_resume_insights([r.resume for r in results])
         
-        report = {
+        report: Dict[str, Any] = {
             "analysis_summary": {
                 "total_candidates": total_candidates,
                 "average_score": round(avg_score, 2),

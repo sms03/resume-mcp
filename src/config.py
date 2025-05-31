@@ -79,16 +79,15 @@ class Config:
         self.experience_weight = float(os.getenv('EXPERIENCE_WEIGHT', '0.3'))
         self.education_weight = float(os.getenv('EDUCATION_WEIGHT', '0.2'))
         self.skills_weight = float(os.getenv('SKILLS_WEIGHT', '0.4'))
-        self.achievements_weight = float(os.getenv('ACHIEVEMENTS_WEIGHT', '0.1'))
-          # Alternative weight names from .env
+        self.achievements_weight = float(os.getenv('ACHIEVEMENTS_WEIGHT', '0.1'))          # Alternative weight names from .env
         if os.getenv('DEFAULT_SCORING_WEIGHTS_EXPERIENCE'):
-            self.experience_weight = float(os.getenv('DEFAULT_SCORING_WEIGHTS_EXPERIENCE'))
+            self.experience_weight = float(os.getenv('DEFAULT_SCORING_WEIGHTS_EXPERIENCE', '0.30'))
         if os.getenv('DEFAULT_SCORING_WEIGHTS_EDUCATION'):
-            self.education_weight = float(os.getenv('DEFAULT_SCORING_WEIGHTS_EDUCATION'))
+            self.education_weight = float(os.getenv('DEFAULT_SCORING_WEIGHTS_EDUCATION', '0.25'))
         if os.getenv('DEFAULT_SCORING_WEIGHTS_SKILLS'):
-            self.skills_weight = float(os.getenv('DEFAULT_SCORING_WEIGHTS_SKILLS'))
+            self.skills_weight = float(os.getenv('DEFAULT_SCORING_WEIGHTS_SKILLS', '0.35'))
         if os.getenv('DEFAULT_SCORING_WEIGHTS_ACHIEVEMENTS'):
-            self.achievements_weight = float(os.getenv('DEFAULT_SCORING_WEIGHTS_ACHIEVEMENTS'))
+            self.achievements_weight = float(os.getenv('DEFAULT_SCORING_WEIGHTS_ACHIEVEMENTS', '0.10'))
         
         # Validate weights sum to 1.0
         total_weight = (self.experience_weight + self.education_weight + 
