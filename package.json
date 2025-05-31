@@ -1,0 +1,82 @@
+{
+    "name": "resume-analysis-mcp-server",
+    "version": "1.0.0",
+    "description": "MCP Server for intelligent resume analysis and candidate selection using Google Agent Development Kit",
+    "main": "main.py",
+    "scripts": {
+        "start": "python main.py",
+        "test": "python -m pytest tests/ -v",
+        "test-coverage": "python -m pytest tests/ --cov=src --cov-report=html",
+        "lint": "flake8 src/ tests/",
+        "format": "black src/ tests/",
+        "type-check": "mypy src/",
+        "install-deps": "pip install -r requirements.txt",
+        "install-dev": "pip install -r requirements.txt && pip install -r tests/requirements.txt",
+        "download-models": "python -c \"import spacy; spacy.cli.download('en_core_web_sm')\" && python -c \"import nltk; nltk.download('punkt'); nltk.download('stopwords')\""
+    },
+    "keywords": [
+        "resume",
+        "analysis",
+        "mcp",
+        "ai",
+        "google",
+        "nlp",
+        "hiring",
+        "recruitment"
+    ],
+    "author": "Resume Analysis Team",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/your-org/resume-analysis-mcp-server.git"
+    },
+    "bugs": {
+        "url": "https://github.com/your-org/resume-analysis-mcp-server/issues"
+    },
+    "engines": {
+        "python": ">=3.8"
+    },
+    "dependencies": {
+        "python": ">=3.8",
+        "mcp": ">=1.0.0",
+        "google-cloud-aiplatform": ">=1.40.0",
+        "google-generativeai": ">=0.3.0",
+        "pydantic": ">=2.0.0",
+        "spacy": ">=3.7.0",
+        "nltk": ">=3.8.1"
+    },    "devDependencies": {
+        "pytest": ">=7.4.0",
+        "black": ">=23.7.0",
+        "flake8": ">=6.0.0",
+        "mypy": ">=1.5.0"
+    },
+    "mcp": {
+        "server": {
+            "name": "resume-analysis",
+            "description": "Resume Analysis MCP Server",
+            "version": "1.0.0",
+            "transport": ["stdio", "http"],
+            "entrypoint": "main.py",
+            "web_entrypoint": "adk_main.py",
+            "capabilities": {
+                "tools": [
+                    "analyze_resume",
+                    "batch_analyze_resumes",
+                    "score_resume",
+                    "sort_resumes",
+                    "filter_resumes",
+                    "match_job",
+                    "extract_skills",
+                    "generate_report"
+                ],
+                "web_ui": true,
+                "adk_compatible": true
+            },
+            "endpoints": {
+                "base_url": "http://localhost:3000",
+                "health": "/health",
+                "status": "/"
+            }
+        }
+    }
+}
