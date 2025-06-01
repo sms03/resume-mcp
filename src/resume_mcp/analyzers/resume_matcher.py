@@ -85,12 +85,11 @@ class ResumeMatcher:
             experience_match=experience_match.score / 100,
             education_match=education_match.score / 100,
             overall_score=overall_match.score / 100,
-            confidence=overall_match.confidence / 100
-        )
+            confidence=overall_match.confidence / 100        )
         
         return MatchResult(
-            job_id=getattr(job, 'id', 'unknown_job'),
-            resume_id=getattr(resume, 'id', 'unknown_resume'),
+            job_id=getattr(job, 'id', None) or 'unknown_job',
+            resume_id=getattr(resume, 'id', None) or 'unknown_resume',
             resume_name=getattr(resume.contact_info, 'name', 'Unknown Name') if resume.contact_info and resume.contact_info.name else 'Unknown Name',
             job_title=job.title,
             match_score=match_score,
