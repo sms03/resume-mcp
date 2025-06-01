@@ -22,6 +22,12 @@ resume_analyzer = ResumeAnalyzer()
 def setup_mcp_routes(app: FastAPI):
     """Set up the MCP routes for the FastAPI app"""
     
+    @app.get("/")
+    async def root_redirect():
+        """Redirect root URL to the UI page"""
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/ui/")
+    
     @app.post("/mcp/")
     async def handle_mcp_request(request: ModelContextRequest) -> ModelContextResponse:
         """Handle MCP requests following the Model Context Protocol"""
