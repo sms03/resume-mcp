@@ -1,74 +1,48 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "resume-mcp-agent"
+name = "resume-mcp"
 version = "0.1.0"
-description = "MCP server for AI-powered resume analysis and sorting"
-authors = [{name = "Resume MCP Agent", email = "agent@example.com"}]
-license = {text = "MIT"}
+description = "MCP Server Agent for Resume Analysis"
 readme = "README.md"
-requires-python = ">=3.9"
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
 ]
 dependencies = [
-    "mcp>=1.0.0",
-    "fastapi>=0.104.0",
-    "uvicorn>=0.24.0",
-    "pydantic>=2.5.0",
+    "adk>=0.5.0",
+    "mcp>=0.5.0",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.27.0",
     "python-multipart>=0.0.6",
-    "aiofiles>=23.2.1",
-    "PyPDF2>=3.0.1",
-    "python-docx>=1.1.0",
-    "spacy>=3.7.0",
-    "scikit-learn>=1.3.0",
-    "numpy>=1.24.0",
-    "pandas>=2.1.0",
-    "transformers>=4.35.0",
-    "torch>=2.1.0",
-    "sentence-transformers>=2.2.2",
-    "nltk>=3.8.1",
-    "textstat>=0.7.3",
-    "fuzzywuzzy>=0.18.0",
-    "python-levenshtein>=0.23.0",
-    "httpx>=0.25.0",
-    "jinja2>=3.1.2",
-    "google-cloud-aiplatform>=1.38.0",
-    "google-generativeai>=0.3.0",
+    "langchain>=0.1.12",
+    "pydantic>=2.7.1",
+    "pypdf>=4.1.0",
+    "google-generativeai>=0.3.2",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.4.0",
-    "pytest-asyncio>=0.21.0",
+    "pytest>=7.0.0",
     "black>=23.0.0",
     "isort>=5.12.0",
-    "flake8>=6.0.0",
-    "mypy>=1.7.0",
+    "mypy>=1.0.0",
 ]
 
-[project.scripts]
-resume-mcp = "resume_mcp.server:main"
-
 [tool.black]
-line-length = 100
-target-version = ['py39']
+line-length = 88
+target-version = ['py310']
 
 [tool.isort]
 profile = "black"
-line_length = 100
+line_length = 88
 
 [tool.mypy]
-python_version = "3.9"
-strict = true
+python_version = "3.10"
 warn_return_any = true
 warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true

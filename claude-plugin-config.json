@@ -1,0 +1,77 @@
+{
+  "name": "Resume Analysis Agent",
+  "version": "0.1.0",
+  "description": "An MCP agent for analyzing resumes and matching them to job descriptions",
+  "contact_email": "your.email@example.com",
+  "legal_info_url": "https://yourwebsite.com/legal",
+  "mcp_server_url": "http://localhost:8080/mcp/",
+  "http_server_url": "http://localhost:8080",
+  "auth": {
+    "type": "none"
+  },
+  "logo_url": "http://localhost:8080/static/logo.png",
+  "ui": {
+    "url": "http://localhost:8080/ui/",
+    "width": 600,
+    "height": 600
+  },
+  "functions": [
+    {
+      "name": "analyze_resume",
+      "description": "Analyze a resume to extract key information",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "resume_text": {
+            "type": "string",
+            "description": "The full text of the resume to analyze"
+          }
+        },
+        "required": ["resume_text"]
+      }
+    },
+    {
+      "name": "match_resume_to_job",
+      "description": "Compare a resume against a job description to determine fit",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "resume_text": {
+            "type": "string",
+            "description": "The full text of the resume"
+          },
+          "job_description": {
+            "type": "string",
+            "description": "The job description to match against"
+          }
+        },
+        "required": ["resume_text", "job_description"]
+      }
+    },
+    {
+      "name": "rank_candidates",
+      "description": "Rank multiple resumes against a job description",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "resumes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string"},
+                "text": {"type": "string"}
+              }
+            },
+            "description": "Array of resume objects with id and text"
+          },
+          "job_description": {
+            "type": "string",
+            "description": "The job description to rank against"
+          }
+        },
+        "required": ["resumes", "job_description"]
+      }
+    }
+  ]
+}

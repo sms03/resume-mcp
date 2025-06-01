@@ -1,0 +1,230 @@
+"""
+Resume analyzer using Google ADK
+"""
+import os
+import logging
+import json
+from typing import Dict, List, Any, Optional
+import google.generativeai as genai
+from google.adk.agents.llm_agent import Agent
+from resume_mcp.prompts import (
+    RESUME_ANALYSIS_PROMPT,
+    RESUME_JOB_MATCHING_PROMPT,
+    CANDIDATE_RANKING_PROMPT
+)
+
+logger = logging.getLogger(__name__)
+
+class ResumeAnalyzer:
+    """Resume analysis using Google ADK"""
+      def __init__(self):
+        """Initialize the resume analyzer"""
+        # Set up Google's generative AI
+        api_key = os.environ.get("GOOGLE_API_KEY")
+        if not api_key:
+            logger.warning("GOOGLE_API_KEY not found in environment. Some features may not work.")
+        else:
+            genai.configure(api_key=api_key)
+        
+        # Initialize ADK agent
+        try:
+            self.agent = self._setup_agent()
+            logger.info("ADK agent initialized successfully")
+        except Exception as e:
+            logger.error(f"Error initializing ADK agent: {str(e)}")
+            self.agent = None
+              def _setup_agent(self) -> Agent:
+        """Set up the ADK agent"""
+        # Create an agent with the new API
+        agent = Agent(
+            name="ResumeAnalysisAgent",
+            description="An agent that analyzes resumes and matches them to job descriptions"
+        )
+        
+        # Configure the Gemini model
+        genai.configure(api_key=os.environ.get("GOOGLE_API_KEY", ""))
+        
+        return agent
+    
+    async def analyze_resume(self, resume_text: str) -> Dict[str, Any]:
+        """
+        Analyze a resume to extract key information
+        
+        Args:
+            resume_text (str): The text content of the resume
+            
+        Returns:
+            Dict[str, Any]: Structured resume information
+        """
+        if not self.agent:
+            raise RuntimeError("ADK agent not initialized")
+        
+        try:
+            # Create prompt for resume analysis
+            prompt = RESUME_ANALYSIS_PROMPT.format(resume_text=resume_text)
+            
+            # Get response from agent
+            response = await self.agent.generate_content(prompt)
+            
+            # Parse and validate response
+            try:
+                result = json.loads(response.text)
+                return result
+            except json.JSONDecodeError:
+                # If not valid JSON, extract structured data manually
+                logger.warning("Response was not valid JSON, extracting manually")
+                return self._extract_structured_data(response.text)
+            
+        except Exception as e:
+            logger.error(f"Error analyzing resume: {str(e)}")
+            return {
+                "error": str(e),
+                "resume_text": resume_text[:100] + "..." if len(resume_text) > 100 else resume_text
+            }
+    
+    async def match_resume_to_job(self, resume_text: str, job_description: str) -> Dict[str, Any]:
+        """
+        Match a resume against a job description
+        
+        Args:
+            resume_text (str): The text content of the resume
+            job_description (str): The job description text
+            
+        Returns:
+            Dict[str, Any]: Match results with scores and explanations
+        """
+        if not self.agent:
+            raise RuntimeError("ADK agent not initialized")
+        
+        try:
+            # Create prompt for resume-job matching
+            prompt = RESUME_JOB_MATCHING_PROMPT.format(
+                resume_text=resume_text,
+                job_description=job_description
+            )
+            
+            # Get response from agent
+            response = await self.agent.generate_content(prompt)
+            
+            # Parse and validate response
+            try:
+                result = json.loads(response.text)
+                return result
+            except json.JSONDecodeError:
+                # If not valid JSON, extract structured data manually
+                logger.warning("Response was not valid JSON, extracting manually")
+                return self._extract_structured_data(response.text)
+            
+        except Exception as e:
+            logger.error(f"Error matching resume to job: {str(e)}")
+            return {
+                "error": str(e),
+                "match_score": 0,
+                "explanation": f"Error during matching: {str(e)}"
+            }
+    
+    async def rank_candidates(self, resumes: List[Dict[str, str]], job_description: str) -> List[Dict[str, Any]]:
+        """
+        Rank multiple candidates based on their resumes against a job description
+        
+        Args:
+            resumes (List[Dict[str, str]]): List of resume objects with id and text
+            job_description (str): The job description text
+            
+        Returns:
+            List[Dict[str, Any]]: Ranked candidates with scores and explanations
+        """
+        if not self.agent:
+            raise RuntimeError("ADK agent not initialized")
+        
+        try:
+            # For large sets, process in batches
+            if len(resumes) > 10:
+                logger.info(f"Processing {len(resumes)} resumes in batches")
+                # Process in batches of 10
+                batches = [resumes[i:i+10] for i in range(0, len(resumes), 10)]
+                all_rankings = []
+                
+                for batch in batches:
+                    batch_rankings = await self._rank_batch(batch, job_description)
+                    all_rankings.extend(batch_rankings)
+                
+                # Sort by score (descending)
+                all_rankings.sort(key=lambda x: x.get("match_score", 0), reverse=True)
+                return all_rankings
+            else:
+                # Process small batch directly
+                return await self._rank_batch(resumes, job_description)
+            
+        except Exception as e:
+            logger.error(f"Error ranking candidates: {str(e)}")
+            return [{
+                "id": resume.get("id", "unknown"),
+                "error": str(e),
+                "match_score": 0
+            } for resume in resumes]
+    
+    async def _rank_batch(self, resumes: List[Dict[str, str]], job_description: str) -> List[Dict[str, Any]]:
+        """
+        Rank a batch of resumes against a job description
+        
+        Args:
+            resumes (List[Dict[str, str]]): Batch of resumes to rank
+            job_description (str): Job description to rank against
+            
+        Returns:
+            List[Dict[str, Any]]: Ranked resumes
+        """
+        # Create prompt for candidate ranking
+        resume_json = json.dumps([{
+            "id": r.get("id", f"resume_{i}"),
+            "text": r.get("text", "")[:1000]  # Truncate for API limits
+        } for i, r in enumerate(resumes)])
+        
+        prompt = CANDIDATE_RANKING_PROMPT.format(
+            resumes_json=resume_json,
+            job_description=job_description
+        )
+        
+        # Get response from agent
+        response = await self.agent.generate_content(prompt)
+        
+        # Parse and validate response
+        try:
+            result = json.loads(response.text)
+            if isinstance(result, dict) and "rankings" in result:
+                return result["rankings"]
+            return result
+        except json.JSONDecodeError:
+            # If not valid JSON, extract structured data manually
+            logger.warning("Response was not valid JSON, extracting manually")
+            structured_data = self._extract_structured_data(response.text)
+            return structured_data.get("rankings", [])
+    
+    def _extract_structured_data(self, text: str) -> Dict[str, Any]:
+        """
+        Extract structured data from text that should be JSON but isn't
+        
+        Args:
+            text (str): Text that should contain structured data
+            
+        Returns:
+            Dict[str, Any]: Extracted structured data
+        """
+        # Simple extraction - look for JSON-like patterns
+        try:
+            # Try to find JSON object within the text
+            start_idx = text.find('{')
+            end_idx = text.rfind('}')
+            
+            if start_idx != -1 and end_idx != -1:
+                json_text = text[start_idx:end_idx+1]
+                return json.loads(json_text)
+        except:
+            pass
+        
+        # Fallback - return a generic structure with the raw text
+        return {
+            "raw_text": text,
+            "error": "Could not parse structured data"
+        }
